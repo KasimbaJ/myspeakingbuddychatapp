@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  speaking-backend:
+    build: ./backend
+    container_name: speaking-buddy-api
+    restart: unless-stopped
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      - ./backend/public/audio:/app/public/audio
+    networks:
+      - traefik-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.speakingapi.rule=Host(`chat.kasimba.uk`)"
+      - "traefik.http.routers.speakingapi.entrypoints=https"
+      - "traefik.http.routers.speakingapi.tls.certresolver=letsencrypt"
+      - "traefik.http.services.speakingapi.loadbalancer.server.port=3001"
+
+  speaking-frontend:
+    build: ./frontend
+    container_name: speaking-buddy-ui
+    restart: unless-stopped
+    networks:
+      - traefik-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.speakingui.rule=Host(`app.kasimba.uk`)"
+      - "traefik.http.routers.speakingui.entrypoints=https"
+      - "traefik.http.routers.speakingui.tls.certresolver=letsencrypt"
+      - "traefik.http.services.speakingui.loadbalancer.server.port=80"
+
+networks:
+  traefik-net:
+    external: true
